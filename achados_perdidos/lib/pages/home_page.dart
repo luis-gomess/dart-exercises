@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/item.dart';
+import '../widgets/categoria_card.dart';
 import '../widgets/filtro_bar.dart';
 import '../widgets/item_card.dart';
 import '../widgets/resumo_card.dart';
@@ -23,6 +24,19 @@ class _HomePageState extends State<HomePage> {
   ];
 
   String filtro = 'Todos';
+
+  Categoria? categoriaSelecionada;
+
+  int contar(Categoria categoria) {
+    return itens.where((item) => item.categoria == categoria).length;
+  }
+
+  void selecionarCategoria(Categoria categoria) {
+    setState(() {
+      categoriaSelecionada =
+          categoriaSelecionada == categoria ? null : categoria;
+    });
+  }
 
   // TAREFA 3
   int get total => itens.length;
@@ -61,12 +75,30 @@ class _HomePageState extends State<HomePage> {
 
   // TAREFA 8 (desafio)
   List<Item> get itensVisiveis {
+    List<Item> resultado = itens;
     if (filtro == 'Aguardando') {
-      return itens.where((item) => !item.devolvido).toList();
+      resultado = resultado.where((item) => !item.devolvido).toList();
     } else if (filtro == 'Devolvidos') {
-      return itens.where((item) => item.devolvido).toList();
+      resultado = resultado.where((item) => item.devolvido).toList();
     }
-    return itens;
+    // Aula 2 - desafio: filtra também pela categoria escolhida
+    if (categoriaSelecionada != null) {
+      resultado = resultado
+          .where((item) => item.categoria == categoriaSelecionada)
+          .toList();
+    }
+    return resultado;
+  }
+
+  // Monta um CategoriaCard para a faixa
+  Widget cartaoCategoria(Categoria categoria, String nome) {
+    return CategoriaCard(
+      icone: iconeDaCategoria(categoria),
+      nome: nome,
+      quantidade: contar(categoria),
+      selecionado: categoriaSelecionada == categoria,
+      onTap: () => selecionarCategoria(categoria),
+    );
   }
 
   // TAREFA 9 (desafio)
@@ -101,6 +133,26 @@ class _HomePageState extends State<HomePage> {
                 filtro = opcao;
               });
             },
+          ),
+          // Aula 2 - faixa de categorias com rolagem horizontal.
+          // A ListView horizontal fica dentro da Column, por isso o SizedBox com height.
+          SizedBox(
+            height: 100,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+              children: [
+                cartaoCategoria(Categoria.eletronico, 'Eletrônico'),
+                const SizedBox(width: 8),
+                cartaoCategoria(Categoria.material, 'Material'),
+                const SizedBox(width: 8),
+                cartaoCategoria(Categoria.roupa, 'Roupa'),
+                const SizedBox(width: 8),
+                cartaoCategoria(Categoria.documento, 'Documento'),
+                const SizedBox(width: 8),
+                cartaoCategoria(Categoria.outro, 'Outro'),
+              ],
+            ),
           ),
           Expanded(
             child: lista.isEmpty
